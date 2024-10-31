@@ -91,12 +91,13 @@ def scrape_tjsp(term):
     driver.quit()
     return results_content
 
-# Endpoint da API para buscar jurisprudência
 @app.route('/search', methods=['POST'])
 def search():
     data = request.json
     term = data.get('term')
+    print(f"Recebendo requisição de busca com o termo: {term}")  # Log do termo recebido
     results = scrape_tjsp(term)
+    print(f"Enviando resposta com {len(results)} resultados")  # Log do número de resultados
     return jsonify(results)
 
 # Rota GET para verificar o status da API
