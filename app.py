@@ -21,7 +21,7 @@ def configure_driver():
         options.add_argument("--headless")  # Modo headless para produção
         options.add_argument("--no-sandbox")  # Necessário para ambientes de servidor
         options.add_argument("--disable-dev-shm-usage")  # Necessário para ambientes de servidor
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager(version="130.0.6723.92").install()), options=options) 
         return driver
     except Exception as e:
         print(f"Erro ao configurar o ChromeDriver: {e}")
