@@ -10,19 +10,16 @@ import random
 
 app = Flask(__name__)
 
-# Configuração do ChromeDriver com WebDriver Manager e opções anti-detecção
 def configure_driver():
-    try:
-        options = webdriver.ChromeOptions()
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
-        options.add_argument("--disable-blink-features")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--headless")  # Modo headless para produção
-        options.add_argument("--no-sandbox")  # Necessário para ambientes de servidor
-        options.add_argument("--disable-dev-shm-usage")  # Necessário para ambientes de servidor
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options) 
-        return driver
+    options = Options()
+    options.add_argument("--headless")  # Modo headless para produção
+    options.add_argument("--no-sandbox")  # Necessário para ambientes de servidor
+    options.add_argument("--disable-dev-shm-usage")  # Necessário para ambientes de servidor
+    options.binary_location = "/usr/bin/chromium"  # Local do Chromium no container
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    return driver
+
     except Exception as e:
         print(f"Erro ao configurar o ChromeDriver: {e}")
         raise e
