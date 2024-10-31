@@ -12,15 +12,20 @@ app = Flask(__name__)
 
 # Configuração do ChromeDriver com WebDriver Manager e opções anti-detecção
 def configure_driver():
-    options = webdriver.ChromeOptions()
-    # Remover a linha com binary_location para evitar problemas no servidor
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', False)
-    options.add_argument("--disable-blink-features")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless")  # Adiciona modo headless para produção
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    return driver
+    try:
+        options = webdriver.ChromeOptions()
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument("--disable-blink-features")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--headless")  # Modo headless para produção
+        options.add_argument("--no-sandbox")  # Necessário para ambientes de servidor
+        options.add_argument("--disable-dev-shm-usage")  # Necessário para ambientes de servidor
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        return driver
+    except Exception as e:
+        print(f"Erro ao configurar o ChromeDriver: {e}")
+        raise e
 
 # Função para realizar o scraping e retornar o conteúdo das jurisprudências como lista de dicionários
 def scrape_tjsp(term):
@@ -30,23 +35,20 @@ def scrape_tjsp(term):
     sleep(2)
 
     # Inserir termo de busca no campo "Pesquisa Livre"
-    search_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "iddados.buscaInteiroTeor")))
+    search_box = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.ID, "iddados.buscaInteiroTeor")))
     search_box.send_keys(term)
 
     # Submeter a pesquisa clicando no botão "Pesquisar"
     search_button = driver.find_element(By.ID, "pbSubmit")
     search_button.click()
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "tdResultados")))
+    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.ID, "tdResultados")))
 
     results_content = []  # Lista para armazenar os resumos de jurisprudência como dicionários
 
     # Loop para processar cada resultado
     results = driver.find_elements(By.CSS_SELECTOR, "tr.fundocinza1, tr.fundocinza2")
-    for index in range(len(results)):
+    for index, result in enumerate(results):
         try:
-            results = driver.find_elements(By.CSS_SELECTOR, "tr.fundocinza1, tr.fundocinza2")
-            result = results[index]
-            
             numero_processo_element = result.find_element(By.XPATH, ".//a[contains(@class, 'esajLinkLogin')]")
             numero_processo = numero_processo_element.text
             cd_acordao = numero_processo_element.get_attribute("cdacordao")
@@ -96,14 +98,13 @@ def search():
     try:
         data = request.json
         term = data.get('term')
-        print(f"Recebendo requisição de busca com o termo: {term}")  # Log do termo recebido
+        print(f"Recebendo requisição de busca com o termo: {term}")
         results = scrape_tjsp(term)
-        print(f"Enviando resposta com {len(results)} resultados")  # Log do número de resultados
+        print(f"Enviando resposta com {len(results)} resultados")
         return jsonify(results)
     except Exception as e:
-        print(f"Erro no endpoint /search: {e}")  # Print detalhado do erro
+        print(f"Erro no endpoint /search: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
-
 
 # Rota GET para verificar o status da API
 @app.route('/')
