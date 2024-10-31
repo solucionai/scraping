@@ -5,44 +5,41 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
 from time import sleep
 import random
 
 app = Flask(__name__)
 
 def configure_driver():
-    options = Options()
-    options.add_argument("--headless")  # Modo headless para produção
-    options.add_argument("--no-sandbox")  # Necessário para ambientes de servidor
-    options.add_argument("--disable-dev-shm-usage")  # Necessário para ambientes de servidor
-    options.binary_location = "/usr/bin/chromium"  # Local do Chromium no container
+    try:
+        options = Options()
+        options.add_argument("--headless")  # Modo headless para produção
+        options.add_argument("--no-sandbox")  # Necessário para ambientes de servidor
+        options.add_argument("--disable-dev-shm-usage")  # Necessário para ambientes de servidor
+        options.binary_location = "/usr/bin/chromium"  # Local do Chromium no container
 
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    return driver
-
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        return driver
     except Exception as e:
         print(f"Erro ao configurar o ChromeDriver: {e}")
         raise e
 
-# Função para realizar o scraping e retornar o conteúdo das jurisprudências como lista de dicionários
 def scrape_tjsp(term):
     driver = configure_driver()
     url = "https://esaj.tjsp.jus.br/cjsg/consultaCompleta.do?f=1"
     driver.get(url)
     sleep(2)
 
-    # Inserir termo de busca no campo "Pesquisa Livre"
     search_box = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.ID, "iddados.buscaInteiroTeor")))
     search_box.send_keys(term)
 
-    # Submeter a pesquisa clicando no botão "Pesquisar"
     search_button = driver.find_element(By.ID, "pbSubmit")
     search_button.click()
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.ID, "tdResultados")))
 
-    results_content = []  # Lista para armazenar os resumos de jurisprudência como dicionários
+    results_content = []
 
-    # Loop para processar cada resultado
     results = driver.find_elements(By.CSS_SELECTOR, "tr.fundocinza1, tr.fundocinza2")
     for index, result in enumerate(results):
         try:
@@ -103,10 +100,10 @@ def search():
         print(f"Erro no endpoint /search: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
-# Rota GET para verificar o status da API
 @app.route('/')
 def home():
     return "API está funcionando. Acesse /search via POST para realizar a busca."
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=8080)
+
