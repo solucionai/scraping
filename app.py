@@ -103,5 +103,5 @@ def search():
 def home():
     return "API está funcionando. Acesse /search via POST para realizar a busca."
 
-if __name__ == '__main__':
-    app.run()
+if __name__ == "__main__":
+    app.run_server(debug=True, host='0.0.0.0', port=8080)
