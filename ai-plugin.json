@@ -1,0 +1,56 @@
+{
+  "name_for_human": "Pesquisa Jurisprudência",
+  "name_for_model": "pesquisa_jurisprudencia",
+  "description_for_human": "Busca jurisprudências no TJSP com termos específicos.",
+  "description_for_model": "Use este plugin para buscar jurisprudências no TJSP. Envie um termo e ele retorna as jurisprudências relevantes.",
+  "api": {
+    "url": "https://web-production-2d25.up.railway.app",
+    "type": "openapi",
+    "schema": {
+      "openapi": "3.0.0",
+      "info": {
+        "title": "Pesquisa Jurisprudência API",
+        "version": "1.0.0"
+      },
+      "paths": {
+        "/search": {
+          "post": {
+            "summary": "Buscar Jurisprudências",
+            "operationId": "search",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "term": {
+                        "type": "string",
+                        "description": "O termo de busca a ser usado na pesquisa de jurisprudências."
+                      }
+                    },
+                    "required": ["term"]
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Resultados da pesquisa",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
