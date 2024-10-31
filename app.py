@@ -13,31 +13,32 @@ app = Flask(__name__)
 # Configuração do ChromeDriver com WebDriver Manager e opções anti-detecção
 def configure_driver():
     options = webdriver.ChromeOptions()
-    options.binary_location = "C:/Program Files/Google/Chrome/Application/chrome.exe"
+    # Remover a linha com binary_location para evitar problemas no servidor
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option('useAutomationExtension', False)
     options.add_argument("--disable-blink-features")
     options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--headless")  # Adiciona modo headless para produção
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     return driver
 
-# Função para realizar o scraping e retornar o conteúdo das jurisprudências como lista de strings
+# Função para realizar o scraping e retornar o conteúdo das jurisprudências como lista de dicionários
 def scrape_tjsp(term):
     driver = configure_driver()
     url = "https://esaj.tjsp.jus.br/cjsg/consultaCompleta.do?f=1"
     driver.get(url)
     sleep(2)
-    
+
     # Inserir termo de busca no campo "Pesquisa Livre"
     search_box = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "iddados.buscaInteiroTeor")))
     search_box.send_keys(term)
-    
+
     # Submeter a pesquisa clicando no botão "Pesquisar"
     search_button = driver.find_element(By.ID, "pbSubmit")
     search_button.click()
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "tdResultados")))
 
-    results_content = []  # Lista para armazenar os resumos de jurisprudência
+    results_content = []  # Lista para armazenar os resumos de jurisprudência como dicionários
 
     # Loop para processar cada resultado
     results = driver.find_elements(By.CSS_SELECTOR, "tr.fundocinza1, tr.fundocinza2")
@@ -67,17 +68,17 @@ def scrape_tjsp(term):
                 ementa_element = result.find_elements(By.XPATH, ".//div[contains(@id, 'ementa')]")
                 ementa = ementa_element[0].text if ementa_element else "Ementa não disponível"
             
-            jurisprudencia_content = (
-                f"# Jurisprudência - {index + 1} - Processo: {numero_processo}\n\n"
-                f"**Classe/Assunto**: {classe_assunto}\n"
-                f"**Relator**: {relator}\n"
-                f"**Comarca**: {comarca}\n"
-                f"**Órgão Julgador**: {orgao_julgador}\n"
-                f"**Data do Julgamento**: {data_julgamento}\n"
-                f"**Data de Publicação**: {data_publicacao}\n"
-                f"**Ementa**: {ementa}\n"
-                f"[Baixar PDF do Processo]({pdf_url})\n"
-            )
+            jurisprudencia_content = {
+                "processo": numero_processo,
+                "classe_assunto": classe_assunto,
+                "relator": relator,
+                "comarca": comarca,
+                "orgao_julgador": orgao_julgador,
+                "data_julgamento": data_julgamento,
+                "data_publicacao": data_publicacao,
+                "ementa": ementa,
+                "pdf_url": pdf_url
+            }
             results_content.append(jurisprudencia_content)
             print(f"Salvo resumo para Jurisprudência - {index + 1} - Processo: {numero_processo}")
             
