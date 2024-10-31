@@ -93,12 +93,17 @@ def scrape_tjsp(term):
 
 @app.route('/search', methods=['POST'])
 def search():
-    data = request.json
-    term = data.get('term')
-    print(f"Recebendo requisição de busca com o termo: {term}")  # Log do termo recebido
-    results = scrape_tjsp(term)
-    print(f"Enviando resposta com {len(results)} resultados")  # Log do número de resultados
-    return jsonify(results)
+    try:
+        data = request.json
+        term = data.get('term')
+        print(f"Recebendo requisição de busca com o termo: {term}")  # Log do termo recebido
+        results = scrape_tjsp(term)
+        print(f"Enviando resposta com {len(results)} resultados")  # Log do número de resultados
+        return jsonify(results)
+    except Exception as e:
+        print(f"Erro no endpoint /search: {e}")  # Print detalhado do erro
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
 
 # Rota GET para verificar o status da API
 @app.route('/')
