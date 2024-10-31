@@ -1,1 +1,1 @@
-web: python estrutura.py 
+web: python app.py 
